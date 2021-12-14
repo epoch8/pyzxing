@@ -1,48 +1,22 @@
 import ast
 import glob
-import logging
 import os
 import os.path as osp
 import re
-import shutil
+
 import subprocess
 
+from pathlib import Path
 from joblib import Parallel, delayed
 
-from .utils import get_file
-
-preset_jar_url_prefix = "https://github.com/ChenjieXu/pyzxing/releases/download/v0.1/"
-preset_jar_filename = "javase-3.4.1-SNAPSHOT-jar-with-dependencies.jar"
-build_jar_dir = str(osp.sep).join(["zxing", "javase", "target"])
+LIB_PATH = Path(__file__).absolute().parent.parent / 'jar' / 'javase-3.4.2-SNAPSHOT-jar-with-dependencies.jar'
 
 
 class BarCodeReader:
     lib_path = ""
 
-    def __init__(self):
-        """Prepare necessary jar file."""
-        cache_dir = osp.join(osp.expanduser('~'), '.local')
-        os.makedirs(cache_dir, exist_ok=True)
-        # Check build dir
-        build_jar_path = glob.glob(osp.join(build_jar_dir, "javase-*-jar-with-dependencies.jar"))
-        if build_jar_path:
-            build_jar_filename = build_jar_path[-1].split(osp.sep)[-1]
-            # Move built jar file to cache dir
-            self.lib_path = osp.join(cache_dir, build_jar_filename)
-            if not osp.exists(self.lib_path):
-                shutil.copyfile(build_jar_path[-1], self.lib_path)
-            return
-        # Check cache dir
-        cache_jar_path = glob.glob(osp.join(cache_dir, "javase-*-jar-with-dependencies.jar"))
-        if cache_jar_path:
-            self.lib_path = cache_jar_path[-1]
-            return
-        else:
-            # Download preset jar if not built or cache jar
-            download_url = osp.join(preset_jar_url_prefix, preset_jar_filename)
-            get_file(preset_jar_filename, download_url, cache_dir)
-            logging.debug("Download completed.")
-            self.lib_path = osp.join(cache_dir, preset_jar_filename)
+    def __init__(self, lib_path=LIB_PATH):
+        self.lib_path = str(lib_path)
 
     def decode(self, filename_pattern):
         filenames = glob.glob(osp.abspath(filename_pattern))
@@ -121,7 +95,7 @@ class BarCodeReader:
                 raise Exception("Parse Error")
 
             result['raw'] = b'\n'.join(lines[raw_index + 1:parsed_index])
-            result['parsed'] = b'\n'.join(lines[parsed_index + 1:points_index])
+            result['parsed'] = b'\n'.join(lines[parsed_index + 1:points_index]).replace(b"{FNC1}", b'\x1d')
 
             points_num = int(re.search(r"(?<=Found )\d?", lines[points_index].decode()).group())
             result['points'] = [
