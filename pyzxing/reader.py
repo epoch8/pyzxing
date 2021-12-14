@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 from joblib import Parallel, delayed
 
-LIB_PATH = Path(__file__).absolute().parent.parent / 'jar' / 'javase-3.4.2-SNAPSHOT-jar-with-dependencies.jar'
+LIB_PATH = Path(__file__).absolute().parent / 'jar' / 'javase-3.4.2-SNAPSHOT-jar-with-dependencies.jar'
 
 
 class BarCodeReader:

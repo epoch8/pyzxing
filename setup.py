@@ -29,4 +29,6 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     install_requires=reqs.strip().split('\n'),
+    package_data={'pyzxing': ['jar/*.jar']},
+    include_package_data=True
 )
