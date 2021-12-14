@@ -1,12 +1,12 @@
 import ast
 import glob
-import os
 import os.path as osp
 import re
 
 import subprocess
 
 from pathlib import Path
+import tempfile
 from joblib import Parallel, delayed
 
 LIB_PATH = Path(__file__).absolute().parent / 'jar' / 'javase-3.4.2-SNAPSHOT-jar-with-dependencies.jar'
@@ -34,15 +34,10 @@ class BarCodeReader:
         return results
 
     def decode_array(self, array):
-        import cv2 as cv
-        import time
-        os.makedirs('.cache', exist_ok=True)
-        filename = f'.cache/{time.time()}.jpg'
-        if len(array.shape) == 3:
-            array = array[:, :, ::-1]
-        cv.imwrite(filename, array)
-        result = self.decode(filename)
-        os.remove(filename)
+        from PIL import Image
+        with tempfile.NamedTemporaryFile(suffix=".png") as fp:
+            Image.fromarray(array).save(fp)
+            result = self.decode(fp.name)
 
         return result
 
